@@ -45,7 +45,7 @@ fileInput.addEventListener("change", async (e) => {
 
     // 🔥【Bug 修复 1】：必须是 urlData.data.publicUrl 才能拿到真正的带有 /public/ 的完整链接！
     // 否则 publicUrl 变量会是 undefined，存进数据库就会是空字符串，导致相册全是破损空白图。
-    const publicUrl = urlData.data.publicUrl; 
+    const publicUrl = urlData.data ? urlData.data.publicUrl : urlData.publicUrl; 
     const isVideo = file.type.startsWith("video");
 
     // 4. 将公开链接和类型插入到对应的数据表 couple_album 记录中
