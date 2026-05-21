@@ -2,70 +2,141 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>小马同学</title>
+  <title>越洋 ❤️ 美琳 的专属小站</title>
   <style>
-    /* 只留基础样式，保持页面好看 */
+    /* 🔥1. 背景星星/爱心飘落动画 */
+    @keyframes romanticFall {
+      0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+    }
+
     body {
       margin: 0;
       height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: flex-start;
-      align-items: flex-start;   /* 🔥左对齐 */
-      background: #0f172a;
-      color: white;
-      font-family: Arial, sans-serif;
+      align-items: flex-start; /* 🔥保持左对齐布局 */
+      /* 🔥2. 浪漫风：柔和的粉紫渐变背景 */
+      background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+      color: #334155; /* 深灰文字，更柔和 */
+      font-family: 'PingFang SC', 'Microsoft YaHei', Arial, sans-serif; /* 统一字体 */
       padding: 40px;
+      overflow: hidden; /* 防止背景动画溢出 */
+      position: relative; /* 为背景动画定位 */
     }
+
+    /* 🔥3. 标题：居中且带爱心 */
     h1 {
       width: 100%;
-      text-align: center;  /* 🔥核心：文字居中 */
+      text-align: center;
       margin: 0;
-      font-size: 28px;
+      font-size: 32px;
+      color: #ec4899; /* 粉色标题 */
+      text-shadow: 1px 1px 2px rgba(255,182,193,0.5); /* 柔和阴影 */
     }
+
+    /* 🔥4. 甜蜜小语段落 */
+    .slogan {
+      width: 100%;
+      text-align: center;
+      color: #a78bfa;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    /* 🔥5. 按钮组容器：保留你的布局，升级风格（情侣边框、毛玻璃） */
     .btn-group {
-      margin-top: 20px;
+      margin-top: 40px; /* 增加点距离 */
       display: flex;
       flex-direction: row;
       gap: 20px;
-      padding: 20px;
-      border: 1px solid rgba(255,255,255,0.2);  /* 🔥边框 */
-      border-radius: 12px;
-      background: rgba(255,255,255,0.05);       /* 半透明 */
-      backdrop-filter: blur(10px);              /* 毛玻璃效果 */
-      width: fit-content;   /* 🔥不会撑满屏幕 */
+      padding: 25px;
+      /* 🔥核心改动：柔和的粉紫色边框和半透明毛玻璃粉色 */
+      border: 2px solid rgba(236,72,153,0.3);
+      border-radius: 16px;
+      background: rgba(252,231,243,0.6); /* 半透明粉 */
+      backdrop-filter: blur(8px); /* 毛玻璃 */
+      width: fit-content; /* 不撑满屏幕 */
+      box-shadow: 0 4px 15px rgba(236,72,153,0.15); /* 柔和阴影 */
+      z-index: 10; /* 确保在动画上面 */
     }
 
+    /* 🔥6. 按钮风格：蜜桃粉色，统一宽度 */
     button {
-      width: 220px;             /* 统一宽度 */
-      padding: 15px 30px;
-      font-size: 18px;
+      width: 220px;
+      padding: 18px 30px;
+      font-size: 19px;
+      font-weight: bold;
       border: none;
-      border-radius: 8px;
-      background: #38bdf8;
+      border-radius: 10px;
+      /* 🔥核心改动：蜜桃粉渐变 */
+      background: linear-gradient(to right, #f472b6, #fb923c);
       color: white;
       cursor: pointer;
-      transition: 0.2s;
+      /* 🔥7. 动画升级：增加放大和阴影动效 */
+      transition: all 0.3s ease-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px; /* 文字和图标距离 */
     }
 
+    /* 🔥按钮悬停：放大、变色、边框发光（像心跳一样） */
     button:hover {
-      background: #0284c7;
-      transform: translateY(-2px);
+      background: linear-gradient(to right, #db2777, #f97316); /* 颜色加深 */
+      transform: translateY(-4px) scale(1.03); /* 🔥轻微放大和上移 */
+      box-shadow: 0 6px 20px rgba(236,72,153,0.4); /* 🔥发光效果 */
     }
+
+    /* 🔥8. CSS 背景动画元素（星星和心形） */
+    .falling-shapes::before,
+    .falling-shapes::after {
+      content: '✨'; /* 星星 */
+      position: absolute;
+      font-size: 20px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    .falling-shapes::after {
+      content: '❤️'; /* 心形 */
+      font-size: 15px;
+    }
+
+    /* 制造多个飘落元素，你需要把下面的html元素复制多个才能看出来 */
+    .shape {
+      position: absolute;
+      top: -10px;
+      pointer-events: none;
+      opacity: 0.8;
+      animation: romanticFall linear infinite;
+    }
+
   </style>
 </head>
 
 <body>
-  <h1>你好，这是小马同学的网站 🚀</h1>
-
-  <div class="btn-group">
-    <button id="goCameraBtn">📷 摄像头</button>
-    <button id="goROSBtn">🤖 ROS</button>
-    <button id="goChatBtn">💬 聊天</button>
-    <button id="goMUSICBtn">🎵 音乐</button>
+  <div class="falling-shapes" style="position:fixed; top:0; left:0; width:100%; height:100%; z-index:-1;">
+    <span class="shape" style="color:#fbbf24; left:10%; animation-duration:15s; font-size:18px;">✨</span>
+    <span class="shape" style="color:#ec4899; left:25%; animation-duration:12s; font-size:12px;">❤️</span>
+    <span class="shape" style="color:#fbbf24; left:40%; animation-duration:18s; font-size:22px;">✨</span>
+    <span class="shape" style="color:#ec4899; left:55%; animation-duration:14s; font-size:15px;">❤️</span>
+    <span class="shape" style="color:#fbbf24; left:70%; animation-duration:20s; font-size:20px;">✨</span>
+    <span class="shape" style="color:#ec4899; left:85%; animation-duration:16s; font-size:13px;">❤️</span>
+    <span class="shape" style="color:#fcd34d; left:15%; animation-duration:25s; font-size:16px; top:-50vh;">✨</span>
+    <span class="shape" style="color:#f472b6; left:60%; animation-duration:22s; font-size:18px; top:-40vh;">❤️</span>
   </div>
 
-  <!-- 引入外部JS -->
+  <h1>你好，这里是 越洋 与 美琳 的幸福时刻 💖</h1>
+  <div class="slogan">马越洋 🌸 周美琳：爱在每一刻，实时更新中</div>
+
+  <div class="btn-group">
+    <button id="goCameraBtn">📷 记录我们的美好时光</button>
+    <button id="goROSBtn">🤖 越洋的硬核科技园地</button>
+    <button id="goChatBtn">💬 越洋❤️美琳 的悄悄话</button>
+    <button id="goMUSICBtn">🎵 美琳专属：我们的歌单</button>
+  </div>
+
   <script src="index.js"></script>
 </body>
 </html>
