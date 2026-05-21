@@ -1,8 +1,8 @@
 // ==========================================
 // 🔗 填入你自己在 Supabase 申请的凭证！
 // ==========================================
-const SUPABASE_URL = "https://yryyeyukjuiadtrqifjg.supabase.co"; // 已自动填好
-const SUPABASE_ANON_KEY = "sb_publishable_omkY-vXOVXABtqcdaUn7RA_KLnB0GX-"; // 已自动填好
+const SUPABASE_URL = "https://yryyeyukjuiadtrqifjg.supabase.co"; 
+const SUPABASE_ANON_KEY = "sb_publishable_omkY-vXOVXABtqcdaUn7RA_KLnB0GX-"; 
 
 // 初始化 Supabase 客户端
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -27,7 +27,7 @@ fileInput.addEventListener("change", async (e) => {
   statusText.innerText = "正在向云端飞奔... 🚀";
   
   try {
-    // 1. 生成独一无二的文件名，防止你和美琳上传同名文件时发生覆盖冲突
+    // 1. 生成独一无二的文件名
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
@@ -43,12 +43,10 @@ fileInput.addEventListener("change", async (e) => {
       .from('album')
       .getPublicUrl(fileName);
 
-    // 🔥【Bug 修复 1】：必须是 urlData.data.publicUrl 才能拿到真正的带有 /public/ 的完整链接！
-    // 否则 publicUrl 变量会是 undefined，存进数据库就会是空字符串，导致相册全是破损空白图。
     const publicUrl = urlData.data ? urlData.data.publicUrl : urlData.publicUrl; 
     const isVideo = file.type.startsWith("video");
 
-    // 4. 将公开链接和类型插入到对应的数据表 couple_album 记录中
+    // 4. 将公开链接和类型插入到对应的数据表 couple_album 记录中（这里多存一份文件名方便后续精准删除）
     const { error: dbError } = await _supabase
       .from('couple_album')
       .insert([
@@ -73,7 +71,7 @@ fileInput.addEventListener("change", async (e) => {
    ========================================== */
 async function fetchAlbum() {
   try {
-    // 从 couple_album 表中选择数据，并按创建时间倒序排列（最新上传的在最前面）
+    // 从 couple_album 表中选择数据，并按创建时间倒序排列
     const { data, error } = await _supabase
       .from('couple_album')
       .select('*')
@@ -93,12 +91,14 @@ async function fetchAlbum() {
     data.forEach(item => {
       let url = item.media_url;
       const type = item.media_type;
+      const id = item.id; // 获取这条数据的唯一标识 ID
       
-      // 🔥【Bug 修复 2】：防御性兼容。如果数据库里之前不幸存入了缺少 "/public/" 的老错网址，
-      // 我们在前端动态把它补上，防止页面报 400 错误。
       if (url && url.includes('/storage/v1/object/album/') && !url.includes('/storage/v1/object/public/album/')) {
         url = url.replace('/storage/v1/object/album/', '/storage/v1/object/public/album/');
       }
+
+      // 从 URL 中解析出最初存入存储桶的文件名（用于删网盘文件）
+      const fileName = url.split('/').pop();
 
       // 转化成容易看懂的本地日期格式
       const time = new Date(item.created_at).toLocaleDateString();
@@ -106,17 +106,25 @@ async function fetchAlbum() {
       const card = document.createElement("div");
       card.className = "media-card";
 
-      if (type === "video") {
-        card.innerHTML = `
-          <video src="${url}" controls playsinline></video>
+      // 🗺️ 动态拼接核心结构，并在底部添加两个精美图标按钮（删除、保存）
+      let mediaHtml = type === "video" 
+        ? `<video src="${url}" controls playsinline></video>` 
+        : `<img src="${url}" alt="情侣回忆">`;
+
+      card.innerHTML = `
+        ${mediaHtml}
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+          <div style="display: flex; gap: 12px; font-size: 14px;">
+            <a href="${url}" download="${fileName}" target="_blank" title="保存到本地" style="color: #10b981; text-decoration: none; cursor: pointer;">
+              <i class="fas fa-download"></i> 保存
+            </a>
+            <span onclick="deletePhoto(${id}, '${fileName}')" title="删除这张" style="color: #ef4444; cursor: pointer;">
+              <i class="fas fa-trash-alt"></i> 删除
+            </span>
+          </div>
           <div class="media-time">📅 ${time}</div>
-        `;
-      } else {
-        card.innerHTML = `
-          <img src="${url}" alt="情侣回忆">
-          <div class="media-time">📅 ${time}</div>
-        `;
-      }
+        </div>
+      `;
       photoGrid.appendChild(card);
     });
 
@@ -125,9 +133,41 @@ async function fetchAlbum() {
   }
 }
 
-// 🗺️【优化 3】：返回主页按钮的路径
-// 正如我们刚才讨论的，你的相册网页在 `picture/` 文件夹下。
-// 使用 `../index.html` 意味着“退回上一层目录寻找主页”，这样在线上和本地都能百分之百完美跳转！
+/* ==========================================
+   ❌ 核心新增：联动删除数据库和云网盘文件
+   ========================================== */
+window.deletePhoto = async function(id, fileName) {
+  if (!confirm("越洋/美琳，确定要把这张珍贵的回忆删掉吗？🥺")) return;
+
+  try {
+    statusText.innerText = "正在拼命清理中... 🧹";
+
+    // 1. 先去存储桶（Storage）里把真正的图片文件删掉
+    const { error: storageError } = await _supabase.storage
+      .from('album')
+      .remove([fileName]);
+
+    if (storageError) throw storageError;
+
+    // 2. 再去数据库表里把这一行链接记录彻底擦除
+    const { error: dbError } = await _supabase
+      .from('couple_album')
+      .delete()
+      .eq('id', id);
+
+    if (dbError) throw dbError;
+
+    statusText.innerText = "✨ 已经安全删除啦！";
+    // 3. 实时刷新列表
+    fetchAlbum();
+
+  } catch (err) {
+    statusText.innerText = "❌ 删除失败";
+    alert("删除出错了: " + err.message);
+  }
+}
+
+// 返回主页按钮的路径
 backBtn.addEventListener("click", () => {
   window.location.href = '../index.html'; 
 });
