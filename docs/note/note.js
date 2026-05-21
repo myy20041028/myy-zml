@@ -28,24 +28,34 @@
   const backBtn = document.getElementById("backBtn");
 
   // 5️⃣ 发布笔记
-  addNoteBtn.addEventListener("click", async () => {
-    const content = newNote.value.trim();
-    if (!content) return alert("笔记不能为空哦");
+addNoteBtn.addEventListener("click", async () => {
+  const content = newNote.value.trim();
+  if (!content) return alert("笔记不能为空哦");
 
-    statusText.innerText = "正在发布...💌";
-    try {
-      await addDoc(collection(db, "couple_notes"), {
-        content,
-        author: "你",
-        created_at: serverTimestamp()
-      });
-      newNote.value = "";
-      statusText.innerText = "✨ 已发布！";
-    } catch (err) {
-      statusText.innerText = "❌ 发布失败";
-      console.error(err);
-    }
-  });
+  statusText.innerText = "正在发布...💌";
+
+  try {
+    console.log("开始写入");
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 秒超时
+
+    const result = await addDoc(collection(db, "couple_notes"), {
+      content,
+      author: "你",
+      created_at: Date.now()
+    });
+
+    clearTimeout(timeoutId);
+    console.log("写入成功", result.id);
+    newNote.value = "";
+    statusText.innerText = "✨ 已发布！";
+
+  } catch (err) {
+    console.error("写入失败", err);
+    statusText.innerText = "❌ 发布失败：" + err.message;
+  }
+});
 
   // 6️⃣ 实时监听笔记
   const q = query(collection(db, "couple_notes"), orderBy("created_at", "desc"));
