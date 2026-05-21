@@ -4,7 +4,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const pictureBtn = document.getElementById('goPictureBtn');
   if (pictureBtn) {
     pictureBtn.addEventListener('click', () => {
-      window.location.href = '/tyust-myy/picture/picture.html';
+      window.location.href = 'picture/picture.html';
     });
   }
 
@@ -12,7 +12,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const rosBtn = document.getElementById('goROSBtn');
   if (rosBtn) {
     rosBtn.addEventListener('click', () => {
-      window.location.href = '/tyust-myy/ros/ros.html';
+      window.location.href = 'ros/ros.html';
     });
   }
 
@@ -20,7 +20,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const chatBtn = document.getElementById('goChatBtn');
   if (chatBtn) {
     chatBtn.addEventListener('click', () => {
-      window.location.href = '/tyust-myy/chat/chat.html';
+      window.location.href = 'chat/chat.html';
     });
   }
 
@@ -28,7 +28,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const musicBtn = document.getElementById('goMUSICBtn'); 
   if (musicBtn) {
     musicBtn.addEventListener('click', () => {
-      window.location.href = '/tyust-myy/music/music.html';
+      window.location.href = 'music/music.html';
     });
   }
  
