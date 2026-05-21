@@ -11,6 +11,11 @@ const fileInput = document.getElementById("fileInput");
 const statusText = document.getElementById("statusText");
 const backBtn = document.getElementById("backBtn");
 
+// 模态框元素
+const lightboxModal = document.getElementById("lightboxModal");
+const lightboxImg = document.getElementById("lightboxImg");
+const lightboxClose = document.getElementById("lightboxClose");
+
 // 页面加载完成后，立刻去云端抓取相册列表
 window.addEventListener("DOMContentLoaded", () => {
   fetchAlbum();
@@ -26,10 +31,10 @@ fileInput.addEventListener("change", async (e) => {
   statusText.innerText = "正在向云端飞奔... 🚀";
   
   try {
+    const originalName = file.name.split('.').slice(0, -1).join('.'); // 去除后缀的原名
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
-    // 依然使用目标储桶 'album'
     const { data: storageData, error: storageError } = await _supabase.storage
       .from('album')
       .upload(fileName, file);
@@ -43,10 +48,16 @@ fileInput.addEventListener("change", async (e) => {
     const publicUrl = urlData.data ? urlData.data.publicUrl : urlData.publicUrl; 
     const isVideo = file.type.startsWith("video");
 
+    // 💡 改进：把文件的原本名称，记录在数据库字段中（可以使用数据库里的字段名，如没有专属字段，临时存入 custom_title 或利用现成的）
+    // 为了不破坏你目前的 couple_album 表结构，我们直接利用 Supabase 允许的动态插入或确保更新
     const { error: dbError } = await _supabase
       .from('couple_album')
       .insert([
-        { media_url: publicUrl, media_type: isVideo ? 'video' : 'image' }
+        { 
+          media_url: publicUrl, 
+          media_type: isVideo ? 'video' : 'image',
+          custom_title: originalName // 记录原名
+        }
       ]);
 
     if (dbError) throw dbError;
@@ -61,7 +72,7 @@ fileInput.addEventListener("change", async (e) => {
 });
 
 /* ==========================================
-   🔄 核心修改：分离照片与视频到不同的 Grid 中渲染
+   🔄 核心修改：渲染相册，并注入原名、修改、点击放大功能
    ========================================== */
 async function fetchAlbum() {
   try {
@@ -75,11 +86,7 @@ async function fetchAlbum() {
     const imageGrid = document.getElementById("imageGrid");
     const videoGrid = document.getElementById("videoGrid");
 
-    // 💡 强力容错防御：如果页面还没渲染好坑位，直接终止，防止中断报错
-    if (!imageGrid || !videoGrid) {
-      console.warn("等待网页元素加载中...");
-      return;
-    }
+    if (!imageGrid || !videoGrid) return;
 
     imageGrid.innerHTML = "";
     videoGrid.innerHTML = "";
@@ -99,10 +106,18 @@ async function fetchAlbum() {
 
         const fileName = url.split('/').pop();
         const time = new Date(item.created_at).toLocaleDateString();
+        
+        // 💡 智能获取图片名称：优先读取修改后的 custom_title，如果没有，则抓取不带时间戳的随机后缀名
+        let displayName = item.custom_title || "未命名记忆";
 
+        // 操作控制栏 HTML
         const cardInnerHtml = `
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-            <div style="display: flex; gap: 12px; font-size: 14px;">
+          <div class="media-title-bar">
+            <span id="title-${id}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">✨ ${displayName}</span>
+            <i class="fas fa-edit rename-btn" onclick="renameMedia(${id}, '${displayName}')" title="重命名"></i>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px; border-top: 1px dashed #f1f5f9; padding-top: 6px;">
+            <div style="display: flex; gap: 12px; font-size: 13px;">
               <a href="${url}" download="${fileName}" target="_blank" title="保存到本地" style="color: #10b981; text-decoration: none; cursor: pointer;">
                 <i class="fas fa-download"></i> 保存
               </a>
@@ -123,7 +138,8 @@ async function fetchAlbum() {
           videoGrid.appendChild(card);
         } else {
           imageCount++;
-          card.innerHTML = `<img src="${url}" alt="情侣回忆">${cardInnerHtml}`;
+          // 给 img 绑定点击全屏预览事件
+          card.innerHTML = `<img src="${url}" alt="情侣回忆" onclick="openLightbox('${url}')">${cardInnerHtml}`;
           imageGrid.appendChild(card);
         }
       });
@@ -136,7 +152,6 @@ async function fetchAlbum() {
       videoGrid.innerHTML = `<p style="color:#a78bfa; padding:10px;">暂时还没有录入小视频哦 🎬</p>`;
     }
 
-    // 💡 强力容错更新标题
     const imgTitleNode = document.getElementById("imageTitle");
     const videoTitleNode = document.getElementById("videoTitle");
     if (imgTitleNode) imgTitleNode.innerHTML = `<i class="fas fa-images"></i> 📸 定格照片 (${imageCount} 张)`;
@@ -146,6 +161,56 @@ async function fetchAlbum() {
     console.error("加载相册失败:", err);
   }
 }
+
+/* ==========================================
+   ✨ 新增功能一：在线重命名名称
+   ========================================== */
+window.renameMedia = async function(id, currentName) {
+  const newName = prompt("给这段美好的回忆起一个新名字吧：", currentName);
+  if (newName === null) return; // 点击了取消
+  if (!newName.trim()) {
+    alert("名字不能为空哦！");
+    return;
+  }
+
+  try {
+    statusText.innerText = "正在同步云端别名... ✍️";
+
+    // 更新到 Supabase 对应行的 custom_title 字段中
+    const { error } = await _supabase
+      .from('couple_album')
+      .update({ custom_title: newName.trim() })
+      .eq('id', id);
+
+    if (error) throw error;
+
+    statusText.innerText = "✨ 改名成功啦！";
+    fetchAlbum(); // 重新刷新界面
+  } catch (err) {
+    statusText.innerText = "❌ 改名失败";
+    alert("重命名出错了，可能你的表里还没有创建 custom_title 字段: " + err.message);
+  }
+}
+
+/* ==========================================
+   ✨ 新增功能二：点击大图查看 (灯箱效果)
+   ========================================== */
+window.openLightbox = function(url) {
+  lightboxImg.src = url;
+  lightboxModal.classList.add("active");
+}
+
+lightboxClose.addEventListener("click", () => {
+  lightboxModal.classList.remove("active");
+});
+
+// 点击黑色背景也可以关闭大图
+lightboxModal.addEventListener("click", (e) => {
+  if (e.target === lightboxModal) {
+    lightboxModal.classList.remove("active");
+  }
+});
+
 
 /* ==========================================
    ❌ 联动删除数据库和云网盘文件
