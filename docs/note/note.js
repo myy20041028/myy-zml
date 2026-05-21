@@ -93,3 +93,8 @@
     const noteRef = doc(db, "couple_notes", id);
     await deleteDoc(noteRef);
   };
+
+// 返回主页按钮路径
+backBtn.addEventListener("click", () => {
+  window.location.href = '../index.html'; 
+});
