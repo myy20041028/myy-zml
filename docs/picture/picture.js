@@ -2,7 +2,7 @@
 // 🔗 填入你自己在 Supabase 申请的凭证！
 // ==========================================
 const SUPABASE_URL = "https://yryyeyukjuiadtrqifjg.supabase.co"; // 已自动填好
-const SUPABASE_ANON_KEY = "sb_publishable_omkY-vXOVXABtqcdaUn7RA_KLnB0GX-"; 
+const SUPABASE_ANON_KEY = "sb_publishable_omkY-vXOVXABtqcdaUn7RA_KLnB0GX-"; // 已自动填好
 
 // 初始化 Supabase 客户端
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -43,7 +43,9 @@ fileInput.addEventListener("change", async (e) => {
       .from('album')
       .getPublicUrl(fileName);
 
-    const publicUrl = urlData.publicUrl;
+    // 🔥【Bug 修复 1】：必须是 urlData.data.publicUrl 才能拿到真正的带有 /public/ 的完整链接！
+    // 否则 publicUrl 变量会是 undefined，存进数据库就会是空字符串，导致相册全是破损空白图。
+    const publicUrl = urlData.data.publicUrl; 
     const isVideo = file.type.startsWith("video");
 
     // 4. 将公开链接和类型插入到对应的数据表 couple_album 记录中
@@ -89,8 +91,15 @@ async function fetchAlbum() {
 
     // 循环遍历渲染每一个多媒体卡片
     data.forEach(item => {
-      const url = item.media_url;
+      let url = item.media_url;
       const type = item.media_type;
+      
+      // 🔥【Bug 修复 2】：防御性兼容。如果数据库里之前不幸存入了缺少 "/public/" 的老错网址，
+      // 我们在前端动态把它补上，防止页面报 400 错误。
+      if (url && url.includes('/storage/v1/object/album/') && !url.includes('/storage/v1/object/public/album/')) {
+        url = url.replace('/storage/v1/object/album/', '/storage/v1/object/public/album/');
+      }
+
       // 转化成容易看懂的本地日期格式
       const time = new Date(item.created_at).toLocaleDateString();
 
@@ -116,7 +125,9 @@ async function fetchAlbum() {
   }
 }
 
-// 返回主页按钮
+// 🗺️【优化 3】：返回主页按钮的路径
+// 正如我们刚才讨论的，你的相册网页在 `picture/` 文件夹下。
+// 使用 `../index.html` 意味着“退回上一层目录寻找主页”，这样在线上和本地都能百分之百完美跳转！
 backBtn.addEventListener("click", () => {
-  window.location.href = '/tyust-myy/index.html'; 
+  window.location.href = '../index.html'; 
 });
