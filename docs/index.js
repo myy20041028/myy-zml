@@ -1,10 +1,10 @@
 window.addEventListener('DOMContentLoaded', () => {
 
-  // 摄像头按钮
-  const cameraBtn = document.getElementById('goCameraBtn');
-  if (cameraBtn) {
-    cameraBtn.addEventListener('click', () => {
-      window.location.href = '/tyust-myy/camera/camera.html';
+  // 相册按钮
+  const pictureBtn = document.getElementById('goPictureBtn');
+  if (pictureBtn) {
+    pictureBtn.addEventListener('click', () => {
+      window.location.href = '/tyust-myy/picture/picture.html';
     });
   }
 
