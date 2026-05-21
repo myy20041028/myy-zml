@@ -1,8 +1,8 @@
-  // 1️⃣ 通过 Firebase v12 CDN 引入模块
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+  // 1️⃣ 通过 Firebase v9 CDN 引入模块
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } 
-    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+    from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
   // 2️⃣ Firebase 配置
   const firebaseConfig = {
