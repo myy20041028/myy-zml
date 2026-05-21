@@ -29,6 +29,7 @@ fileInput.addEventListener("change", async (e) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
 
+    // 依然使用目标储桶 'album'
     const { data: storageData, error: storageError } = await _supabase.storage
       .from('album')
       .upload(fileName, file);
@@ -71,15 +72,18 @@ async function fetchAlbum() {
 
     if (error) throw error;
 
-    // 抓取新的网格容器
     const imageGrid = document.getElementById("imageGrid");
     const videoGrid = document.getElementById("videoGrid");
 
-    // 清空内容
+    // 💡 强力容错防御：如果页面还没渲染好坑位，直接终止，防止中断报错
+    if (!imageGrid || !videoGrid) {
+      console.warn("等待网页元素加载中...");
+      return;
+    }
+
     imageGrid.innerHTML = "";
     videoGrid.innerHTML = "";
 
-    // 统计图片和视频各自的数量
     let imageCount = 0;
     let videoCount = 0;
 
@@ -96,7 +100,6 @@ async function fetchAlbum() {
         const fileName = url.split('/').pop();
         const time = new Date(item.created_at).toLocaleDateString();
 
-        // 制作共同的按钮和卡片尾部 HTML
         const cardInnerHtml = `
           <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
             <div style="display: flex; gap: 12px; font-size: 14px;">
@@ -114,7 +117,6 @@ async function fetchAlbum() {
         const card = document.createElement("div");
         card.className = "media-card";
 
-        // 💡 核心分流：根据类别分别塞入不同的网格
         if (type === "video") {
           videoCount++;
           card.innerHTML = `<video src="${url}" controls playsinline></video>${cardInnerHtml}`;
@@ -127,7 +129,6 @@ async function fetchAlbum() {
       });
     }
 
-    // 如果某一边是空的，打上温馨提示底色
     if (imageCount === 0) {
       imageGrid.innerHTML = `<p style="color:#a78bfa; padding:10px;">暂时还没有存入照片墙哦 🌸</p>`;
     }
@@ -135,9 +136,11 @@ async function fetchAlbum() {
       videoGrid.innerHTML = `<p style="color:#a78bfa; padding:10px;">暂时还没有录入小视频哦 🎬</p>`;
     }
 
-    // 动态刷新区块标题里的数量
-    document.querySelector("#imageSection .section-title").innerHTML = `<i class="fas fa-images"></i> 📸 定格照片 (${imageCount} 张)`;
-    document.querySelector("#videoSection .section-title").innerHTML = `<i class="fas fa-film"></i> 🎬 珍贵视频 (${videoCount} 个)`;
+    // 💡 强力容错更新标题
+    const imgTitleNode = document.getElementById("imageTitle");
+    const videoTitleNode = document.getElementById("videoTitle");
+    if (imgTitleNode) imgTitleNode.innerHTML = `<i class="fas fa-images"></i> 📸 定格照片 (${imageCount} 张)`;
+    if (videoTitleNode) videoTitleNode.innerHTML = `<i class="fas fa-film"></i> 🎬 珍贵视频 (${videoCount} 个)`;
 
   } catch (err) {
     console.error("加载相册失败:", err);

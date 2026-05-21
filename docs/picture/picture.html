@@ -48,7 +48,6 @@
 
     .status-text { font-size: 14px; color: #64748b; text-align: center; font-style: italic; }
 
-    /* ✨ 新增：分类快速导航按钮样式 */
     .nav-group { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; border-top: 1px dashed rgba(236, 72, 153, 0.3); padding-top: 20px; }
     .nav-btn {
       width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(236, 72, 153, 0.2);
@@ -60,10 +59,9 @@
     /* 右侧相册展示区域 */
     .album-container {
       flex: 1; padding: 40px; padding-top: 80px;
-      overflow-y: auto; scroll-behavior: smooth; /* 让滚动变平滑 */
+      overflow-y: auto; scroll-behavior: smooth;
     }
 
-    /* ✨ 新增：区域标题小浪漫样式 */
     .section-title {
       font-size: 18px; font-weight: bold; color: #7c3aed;
       margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
@@ -71,7 +69,6 @@
     }
     .section-block { margin-bottom: 40px; }
 
-    /* 照片墙网格布局 */
     .photo-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -122,17 +119,15 @@
     </div>
 
     <div class="album-container">
-      
       <div class="section-block" id="imageSection">
-        <h4 class="section-title"><i class="fas fa-images"></i> 📸 定格照片 ({num})</h4>
+        <h4 class="section-title" id="imageTitle"><i class="fas fa-images"></i> 📸 定格照片 (0 张)</h4>
         <div class="photo-grid" id="imageGrid"></div>
       </div>
 
       <div class="section-block" id="videoSection">
-        <h4 class="section-title"><i class="fas fa-film"></i> 🎬 珍贵视频 ({num})</h4>
+        <h4 class="section-title" id="videoTitle"><i class="fas fa-film"></i> 🎬 珍贵视频 (0 个)</h4>
         <div class="photo-grid" id="videoGrid"></div>
       </div>
-
     </div>
   </div>
 
