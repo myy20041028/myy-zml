@@ -1,7 +1,8 @@
-  // 1️⃣ 通过 CDN 引入 Firebase 模块
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  // 1️⃣ 通过 Firebase v12 CDN 引入模块
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
   import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } 
-    from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
   // 2️⃣ Firebase 配置
   const firebaseConfig = {
@@ -14,8 +15,9 @@
     measurementId: "G-6RGC9KGF89"
   };
 
-  // 3️⃣ 初始化
+  // 3️⃣ 初始化 Firebase
   const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
   const db = getFirestore(app);
 
   // 4️⃣ DOM 元素
@@ -23,6 +25,7 @@
   const addNoteBtn = document.getElementById("addNoteBtn");
   const newNote = document.getElementById("newNote");
   const statusText = document.getElementById("statusText");
+  const backBtn = document.getElementById("backBtn");
 
   // 5️⃣ 发布笔记
   addNoteBtn.addEventListener("click", async () => {
@@ -52,7 +55,6 @@
       const note = docSnap.data();
       const id = docSnap.id;
 
-      // 使用 addEventListener 避免 onclick 的引号问题
       const div = document.createElement("div");
       div.className = "note-card";
 
@@ -94,7 +96,7 @@
     await deleteDoc(noteRef);
   };
 
-// 返回主页按钮路径
-backBtn.addEventListener("click", () => {
-  window.location.href = '../index.html'; 
-});
+  // 9️⃣ 返回主页
+  backBtn.addEventListener("click", () => {
+    window.location.href = '../index.html';
+  });
