@@ -16,11 +16,11 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 聊天按钮
-  const chatBtn = document.getElementById('goChatBtn');
-  if (chatBtn) {
-    chatBtn.addEventListener('click', () => {
-      window.location.href = 'chat/chat.html';
+  // 笔记按钮
+  const noteBtn = document.getElementById('goNoteBtn');
+  if (noteBtn) {
+    noteBtn.addEventListener('click', () => {
+      window.location.href = 'note/note.html';
     });
   }
 
