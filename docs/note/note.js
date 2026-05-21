@@ -1,118 +1,102 @@
-// 1️⃣ Firebase CDN
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } 
-  from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  // 1️⃣ 通过 Firebase v9 CDN 引入模块
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-analytics.js";
+  import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, serverTimestamp } 
+    from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 2️⃣ Firebase 配置
-const firebaseConfig = {
-  apiKey: "AIzaSyACQTAC-VAsK2RDDycnnjNIOnUEHEeUu58",
-  authDomain: "myy-zml.firebaseapp.com",
-  projectId: "myy-zml",
-  storageBucket: "myy-zml.firebasestorage.app",
-  messagingSenderId: "996981037945",
-  appId: "1:996981037945:web:b85af28aadb912c035eda8",
-  measurementId: "G-6RGC9KGF89"
-};
+  // 2️⃣ Firebase 配置
+  const firebaseConfig = {
+    apiKey: "AIzaSyACQTAC-VAsK2RDDycnnjNIOnUEHEeUu58",
+    authDomain: "myy-zml.firebaseapp.com",
+    projectId: "myy-zml",
+    storageBucket: "myy-zml.firebasestorage.app",
+    messagingSenderId: "996981037945",
+    appId: "1:996981037945:web:b85af28aadb912c035eda8",
+    measurementId: "G-6RGC9KGF89"
+  };
 
-// 3️⃣ 初始化 Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-const db = getFirestore(app);
+  // 3️⃣ 初始化 Firebase
+  const app = initializeApp(firebaseConfig);
+  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
 
-// 4️⃣ DOM 元素
-const notesList = document.getElementById("notesList");
-const addNoteBtn = document.getElementById("addNoteBtn");
-const newNote = document.getElementById("newNote");
-const statusText = document.getElementById("statusText");
-const backBtn = document.getElementById("backBtn");
+  // 4️⃣ DOM 元素
+  const notesList = document.getElementById("notesList");
+  const addNoteBtn = document.getElementById("addNoteBtn");
+  const newNote = document.getElementById("newNote");
+  const statusText = document.getElementById("statusText");
+  const backBtn = document.getElementById("backBtn");
 
-// 5️⃣ 发布笔记（稳定版）
-addNoteBtn.addEventListener("click", async () => {
-  const content = newNote.value.trim();
-  if (!content) return alert("笔记不能为空哦");
+  // 5️⃣ 发布笔记
+  addNoteBtn.addEventListener("click", async () => {
+    const content = newNote.value.trim();
+    if (!content) return alert("笔记不能为空哦");
 
-  statusText.innerText = "正在发布...💌";
-  
-  try {
-    console.log("开始写入");
-
-    // 使用本地时间避免 serverTimestamp 阻塞
-    const result = await addDoc(collection(db, "couple_notes"), {
-      content,
-      author: "你",
-      created_at: Date.now() // 本地时间
-    });
-
-    console.log("写入成功", result.id);
-
-    // 清空输入，显示成功
-    newNote.value = "";
-    statusText.innerText = "✨ 已发布！";
-
-    // 可选：后台更新 serverTimestamp，保证数据库时间统一
-    // const noteRef = doc(db, "couple_notes", result.id);
-    // await updateDoc(noteRef, { created_at: serverTimestamp() });
-
-  } catch (err) {
-    console.error("写入失败", err);
-    statusText.innerText = "❌ 发布失败：" + err.message;
-  }
-});
-
-// 6️⃣ 实时监听笔记
-const q = query(collection(db, "couple_notes"), orderBy("created_at", "desc"));
-onSnapshot(q, snapshot => {
-  notesList.innerHTML = "";
-  snapshot.forEach(docSnap => {
-    const note = docSnap.data();
-    const id = docSnap.id;
-
-    const div = document.createElement("div");
-    div.className = "note-card";
-
-    const p = document.createElement("p");
-    p.innerText = note.content;
-
-    const small = document.createElement("small");
-    const timeText = note.created_at ? 
-      (typeof note.created_at.toDate === "function" ? note.created_at.toDate().toLocaleString() : new Date(note.created_at).toLocaleString())
-      : "";
-    small.innerText = `🖊 ${note.author || "匿名"} • ${timeText}`;
-
-    const editBtn = document.createElement("button");
-    editBtn.innerText = "✏️ 编辑";
-    editBtn.addEventListener("click", () => editNote(id, note.content));
-
-    const delBtn = document.createElement("button");
-    delBtn.innerText = "🗑 删除";
-    delBtn.addEventListener("click", () => deleteNote(id));
-
-    div.appendChild(p);
-    div.appendChild(small);
-    div.appendChild(editBtn);
-    div.appendChild(delBtn);
-
-    notesList.appendChild(div);
+    statusText.innerText = "正在发布...💌";
+    try {
+      await addDoc(collection(db, "couple_notes"), {
+        content,
+        author: "你",
+        created_at: serverTimestamp()
+      });
+      newNote.value = "";
+      statusText.innerText = "✨ 已发布！";
+    } catch (err) {
+      statusText.innerText = "❌ 发布失败";
+      console.error(err);
+    }
   });
-});
 
-// 7️⃣ 编辑笔记
-window.editNote = async (id, oldContent) => {
-  const newContent = prompt("修改笔记内容:", oldContent);
-  if (!newContent) return;
-  const noteRef = doc(db, "couple_notes", id);
-  await updateDoc(noteRef, { content: newContent, updated_at: Date.now() });
-};
+  // 6️⃣ 实时监听笔记
+  const q = query(collection(db, "couple_notes"), orderBy("created_at", "desc"));
+  onSnapshot(q, snapshot => {
+    notesList.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const note = docSnap.data();
+      const id = docSnap.id;
 
-// 8️⃣ 删除笔记
-window.deleteNote = async (id) => {
-  if (!confirm("确定删除吗？")) return;
-  const noteRef = doc(db, "couple_notes", id);
-  await deleteDoc(noteRef);
-};
+      const div = document.createElement("div");
+      div.className = "note-card";
 
-// 9️⃣ 返回主页
-backBtn.addEventListener("click", () => {
-  window.location.href = '../index.html';
-});
+      const p = document.createElement("p");
+      p.innerText = note.content;
+
+      const small = document.createElement("small");
+      small.innerText = `🖊 ${note.author || "匿名"} • ${note.created_at ? note.created_at.toDate().toLocaleString() : ""}`;
+
+      const editBtn = document.createElement("button");
+      editBtn.innerText = "✏️ 编辑";
+      editBtn.addEventListener("click", () => editNote(id, note.content));
+
+      const delBtn = document.createElement("button");
+      delBtn.innerText = "🗑 删除";
+      delBtn.addEventListener("click", () => deleteNote(id));
+
+      div.appendChild(p);
+      div.appendChild(small);
+      div.appendChild(editBtn);
+      div.appendChild(delBtn);
+
+      notesList.appendChild(div);
+    });
+  });
+
+  // 7️⃣ 编辑笔记
+  window.editNote = async (id, oldContent) => {
+    const newContent = prompt("修改笔记内容:", oldContent);
+    if (!newContent) return;
+    const noteRef = doc(db, "couple_notes", id);
+    await updateDoc(noteRef, { content: newContent, updated_at: serverTimestamp() });
+  };
+
+  // 8️⃣ 删除笔记
+  window.deleteNote = async (id) => {
+    if (!confirm("确定删除吗？")) return;
+    const noteRef = doc(db, "couple_notes", id);
+    await deleteDoc(noteRef);
+  };
+
+  // 9️⃣ 返回主页
+  backBtn.addEventListener("click", () => {
+    window.location.href = '../index.html';
+  });
